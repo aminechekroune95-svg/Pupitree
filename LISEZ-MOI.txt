@@ -1,31 +1,28 @@
-PUPITRE : mise en ligne (une seule fois, environ 10 minutes)
+PUPITRE
 
-L'appli doit être ouverte depuis une adresse https pour avoir le droit
-d'utiliser le micro. GitHub Pages fait ça gratuitement.
+Adresse : https://aminechekroune95-svg.github.io/Pupitree/
+Sur l'iPhone : ouvre l'adresse dans Safari > Partager > « Sur l'écran
+d'accueil ». Puis ouvre Pupitre depuis l'icône et autorise le micro.
 
-1. Décompresse ce zip (app Fichiers : touche le zip). Tu obtiens le dossier
-   « pupitre » avec 7 fichiers.
-2. Sur github.com, dans Safari : connecte-toi ou crée un compte gratuit.
-3. Bouton « + » > New repository. Nom : pupitre. Coche « Public » et
-   « Add a README file ». Puis Create repository.
-4. Add file > Upload files > sélectionne les 7 fichiers du dossier
-   « pupitre » > Commit changes.
-   Si « Add file » n'apparaît pas sur l'iPhone : aA > Site pour ordinateur.
-5. Settings > Pages. Source : « Deploy from a branch ». Branch : « main »,
-   dossier « / (root) ». Save.
-6. Attends 1 à 2 minutes. L'adresse apparaît en haut de la page Pages :
-   https://TON-PSEUDO.github.io/pupitre/
-7. Ouvre cette adresse dans Safari > Partager > « Sur l'écran d'accueil »
-   > Ajouter.
-8. Ouvre Pupitre depuis l'icône > Activer le micro > Autoriser.
+À faire en premier : « Réglage du piano ». Ton piano n'est pas accordé ;
+Pupitre écoute chaque touche une fois et retient sa vraie hauteur.
+Refais le réglage si le piano est accordé ou si tu changes de piano.
 
 Si le micro ne démarre pas depuis l'icône : ouvre la même adresse dans
 Safari, ou redémarre l'iPhone (bug connu d'iOS avec les applis web).
 
-Pour installer une nouvelle version : remplace index.html sur GitHub
-(Add file > Upload files). L'appli se met à jour à l'ouverture suivante.
-
 Tes progrès restent sur ton iPhone. Aucun son n'est enregistré ni envoyé.
 
-Crédits : symboles musicaux de la police Bravura (Steinberg Media
-Technologies), licence SIL Open Font License 1.1.
+Crédits
+- Symboles musicaux : police Bravura (Steinberg Media Technologies),
+  licence SIL Open Font License 1.1.
+- Valse op. posth. 69 n° 1 : première édition française (Meissonnier fils,
+  Paris, 1855), d'après :
+    First Editions of Fryderyk Chopin's Music
+    Copyright 2017-2021 The Fryderyk Chopin Institute (https://nifc.pl)
+    Website: https://chopinscores.org
+    Digital scores: https://github.com/pl-wnifc/humdrum-chopin-first-editions
+    License: https://creativecommons.org/licenses/by/4.0
+  Modifications : mesures numérotées depuis la levée (levée = 0), libellés,
+  indication métronomique et remarques d'encodage retirés, découpage en
+  passages de 4 mesures. Partition gravée avec Verovio.
