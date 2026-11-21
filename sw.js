@@ -1,6 +1,6 @@
 // Pupitre : fonctionne hors ligne une fois ouvert une première fois.
-const CACHE = 'pupitre-v1';
-const FILES = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
+const CACHE = 'pupitre-v2';
+const FILES = ['./', './index.html', './manifest.webmanifest', './valse.json', './icon-180.png', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
 });

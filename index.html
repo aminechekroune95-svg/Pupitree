@@ -38,6 +38,7 @@
   }
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { height: 100%; }
 body {
   margin: 0; background: var(--paper); color: var(--ink);
@@ -208,6 +209,37 @@ p { margin: 0; }
 .hist div { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: .9rem; }
 .danger { color: var(--bad); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; font-weight: 500; }
 .danger.armed { background: var(--bad); color: #fff; border-color: var(--bad); }
+/* Réglage du piano */
+.tunecard { border-left: 3px solid var(--live); padding: 4px 0 4px 12px; display: grid; gap: 8px; }
+.meterbar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.meterbar i { display: block; height: 100%; background: var(--accent); width: 0; }
+.mk { position: relative; display: flex; height: 70px; max-width: 280px; margin: 0 auto; width: 100%; --bkw: calc(100% / 7 * .6); }
+.mk span { flex: 1; background: #fbfbf7; border: 1px solid #b4b4ac; border-left-width: 0; border-radius: 0 0 6px 6px; }
+.mk span:first-child { border-left-width: 1px; }
+.mk b { position: absolute; top: 0; width: var(--bkw); height: 60%; background: #18181b; border-radius: 0 0 4px 4px; z-index: 2; }
+.mk .on { background: var(--live) !important; }
+.keyname { font-family: var(--display); font-weight: 700; font-size: 2.4rem; line-height: 1; }
+/* Valse */
+.valse-row .rt { color: var(--live); font-style: italic; }
+.vlist { display: grid; border-top: 1px solid var(--line); }
+.vrow { display: grid; gap: 4px; text-align: left; width: 100%; padding: 12px 2px; border-bottom: 1px solid var(--line); }
+.vrow .vt { font-weight: 600; }
+.vrow .vm { font-size: .84rem; color: var(--muted); }
+.vrow .vm i { font-family: var(--display); font-weight: 700; }
+.sts { display: flex; gap: 6px; flex-wrap: wrap; }
+.st { font-size: .74rem; border-radius: 999px; padding: 2px 9px; border: 1px solid var(--line); color: var(--muted); }
+.st.ok { border-color: var(--ok); color: var(--ok); font-weight: 600; }
+.vscore { background: #fdfdfb; color: #18191d; border: 1px solid var(--line); border-radius: 16px; padding: 4px 6px; overflow: hidden; }
+.vscore svg.vsvg { display: block; width: 100%; height: auto; fill: currentColor; color: #18191d; }
+.vsvg g.dir, .vsvg g.dynam, .vsvg g.mNum { font-style: italic; }
+.vsvg g.ending, .vsvg g.fing, .vsvg g.reh, .vsvg g.tempo { font-weight: bold; }
+.vsvg ellipse, .vsvg path, .vsvg polygon, .vsvg polyline, .vsvg rect { stroke: currentColor; }
+.vsvg g.note.cur { fill: #1d4f91; color: #1d4f91; }
+.vsvg g.note.done { fill: #1f7a4a; color: #1f7a4a; }
+.vsvg g.note.miss { fill: #c2392b; color: #c2392b; }
+.vsvg g.note.play { fill: #8c2a17; color: #8c2a17; }
+.vsvg g.placeholder { visibility: hidden; }
+.credit { font-size: .78rem; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .ear.hit .dot { animation: none; } .pulse i { transition: none; } }
 </style>
 </head>
@@ -221,18 +253,21 @@ p { margin: 0; }
     <p class="sub">Pose ton téléphone sur le pupitre : l’appli écoute ton piano et te dit ce qu’elle entend.</p>
   </header>
   <div class="mic" id="h-mic"></div>
+  <div id="h-tune"></div>
   <div class="card">
     <div class="topbar" style="min-height:0"><span class="lbl">Termes de la séance</span><button type="button" class="link small" data-go="vocab">Quiz ›</button></div>
     <div class="terms" id="h-terms"></div>
     <button type="button" class="suggest" id="h-suggest" hidden></button>
   </div>
   <nav class="list" aria-label="Exercices">
+    <button type="button" class="row-btn valse-row" data-go="valse"><span class="rt">Valse de l’adieu</span><span class="go" aria-hidden="true">›</span><span class="rd">Ta valse, passage par passage, main par main : Pupitre écoute et attend la bonne note.</span></button>
     <button type="button" class="row-btn" data-open="lecture"><span class="rt">Lecture</span><span class="go" aria-hidden="true">›</span><span class="rd">Une note s’affiche, tu la joues : l’appli vérifie la hauteur.</span></button>
     <button type="button" class="row-btn" data-open="accords"><span class="rt">Accords</span><span class="go" aria-hidden="true">›</span><span class="rd">Lis l’accord, joue-le : l’appli vérifie les notes entendues.</span></button>
     <button type="button" class="row-btn" data-go="tempo"><span class="rt">Tempo</span><span class="go" aria-hidden="true">›</span><span class="rd">Ton tempo en direct : trop vite, trop lent, tu accélères.</span></button>
     <button type="button" class="row-btn" data-go="dyn"><span class="rt">Nuances</span><span class="go" aria-hidden="true">›</span><span class="rd">Piano, forte, crescendo, contraste entre deux parties.</span></button>
     <button type="button" class="row-btn" data-go="free"><span class="rt">Écoute libre</span><span class="go" aria-hidden="true">›</span><span class="rd">L’appli affiche la note ou l’accord que tu joues.</span></button>
     <button type="button" class="row-btn" data-go="vocab"><span class="rt">Vocabulaire</span><span class="go" aria-hidden="true">›</span><span class="rd">Les termes musicaux, en quiz, et ton lexique.</span></button>
+    <button type="button" class="row-btn" data-go="tune"><span class="rt">Réglage du piano</span><span class="go" aria-hidden="true">›</span><span class="rd" id="h-tunestat">Pas encore réglé.</span></button>
   </nav>
   <button type="button" class="secondary" data-go="progress">Mes progrès</button>
   <p class="muted small">Pour Lecture et Accords : sans pédale, une note ou un accord à la fois. Pour les nuances, garde le téléphone toujours au même endroit.</p>
@@ -253,6 +288,7 @@ p { margin: 0; }
 <section class="view" id="v-setup" hidden>
   <div class="topbar"><button type="button" class="link" data-go="home">‹ Accueil</button></div>
   <header class="hero"><h2 id="s-title"></h2><p id="s-desc" class="sub"></p></header>
+  <div id="s-tune"></div>
   <div class="stage" id="s-preview"></div>
   <div class="opts" id="s-opts"></div>
   <button type="button" class="primary" id="s-start">Commencer</button>
@@ -321,6 +357,50 @@ p { margin: 0; }
   <div class="lex" id="v-lex"></div>
 </section>
 
+<section class="view" id="v-tune" hidden>
+  <div class="topbar"><button type="button" class="link" data-go="home">‹ Accueil</button><span class="clock" id="g-count"></span></div>
+  <div id="g-home" class="opts">
+    <header class="hero"><h2>Réglage du piano</h2><p class="sub">Ton piano n’est pas accordé : certaines touches sonnent entre deux notes. Pupitre écoute chaque touche une fois et retient sa vraie hauteur. Ensuite, il reconnaît tes notes et tes accords d’après ton piano.</p></header>
+    <div id="g-status"></div>
+    <button type="button" class="primary live" data-tune="full">Réglage complet : 60 touches, environ 4 min</button>
+    <button type="button" class="secondary" data-tune="quick">Réglage rapide : 13 touches autour du Do central</button>
+    <p class="hint">Joue chaque touche une fois, mezzo forte, sans pédale. Pupitre passe tout seul à la suivante. Le réglage complet est plus sûr : chaque touche d’un piano désaccordé est fausse à sa façon.</p>
+    <button type="button" class="danger" id="g-clear" hidden>Effacer le réglage</button>
+  </div>
+  <div id="g-run" class="opts" hidden>
+    <div class="meterbar" aria-hidden="true"><i id="g-bar"></i></div>
+    <div class="stage" id="g-score"></div>
+    <div style="text-align:center;display:grid;gap:4px"><span class="lbl">Joue cette touche</span><span class="keyname" id="g-name"></span><span class="muted small" id="g-oct"></span></div>
+    <div class="mk" id="g-kb" aria-hidden="true"></div>
+    <div class="ear" id="g-ear"><span class="dot"></span><span class="lvl"><i></i></span><span class="msg">J’écoute…</span></div>
+    <p class="fb" id="g-fb" aria-live="polite"></p>
+    <div class="row2"><button type="button" class="secondary" id="g-skip">Passer cette touche</button><button type="button" class="secondary" id="g-stop">Arrêter</button></div>
+  </div>
+</section>
+
+<section class="view" id="v-valse" hidden>
+  <div class="topbar"><button type="button" class="link" data-go="home">‹ Accueil</button></div>
+  <header class="hero"><p class="lbl">Chopin · Valse op. posth. 69 n° 1</p><h2>Valse de l’adieu</h2>
+    <p class="sub">Choisis un passage de 4 mesures, apprends-le main droite, puis main gauche, puis les deux. Joue lentement, note par note : Pupitre attend la bonne note avant d’avancer.</p></header>
+  <div id="vl-tune"></div>
+  <div class="tiles" id="vl-tiles"></div>
+  <div class="vlist" id="vl-list"></div>
+  <p class="credit" id="vl-credit"></p>
+</section>
+
+<section class="view" id="v-vpass" hidden>
+  <div class="topbar"><button type="button" class="link" data-go="valse">‹ Passages</button><span class="dt" id="vp-title"></span><span class="clock" id="vp-count"></span></div>
+  <div class="vscore" id="vp-score"></div>
+  <p class="muted small" id="vp-same" hidden></p>
+  <div class="seg" id="vp-hand" role="group" aria-label="Main"></div>
+  <div class="row2"><button type="button" class="primary live" id="vp-go">Jouer</button><button type="button" class="secondary" id="vp-listen">Écouter</button></div>
+  <div class="ear" id="vp-ear"><span class="dot"></span><span class="lvl"><i></i></span><span class="msg">Micro prêt</span></div>
+  <p class="fb" id="vp-fb" aria-live="polite"></p>
+  <p class="small" id="vp-terms"></p>
+  <div class="row2"><button type="button" class="secondary" id="vp-prev">‹ Passage précédent</button><button type="button" class="secondary" id="vp-next">Passage suivant ›</button></div>
+  <p class="hint">Le son de « Écouter » peut être faible tant que le micro est actif : c’est une limite de l’iPhone.</p>
+</section>
+
 <section class="view" id="v-progress" hidden>
   <div class="topbar"><button type="button" class="link" data-go="home">‹ Accueil</button></div>
   <header class="hero"><h2>Mes progrès</h2></header>
@@ -337,6 +417,7 @@ p { margin: 0; }
 </section>
 
 </main>
+<svg id="vdefs" width="0" height="0" style="position:absolute" aria-hidden="true"><defs></defs></svg>
 <div class="sheet-bg" id="sheet" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sh-name"><span class="lbl" id="sh-cat"></span><span class="tn" id="sh-name"></span><p id="sh-def"></p><button type="button" class="secondary" id="sh-close">Fermer</button></div></div>
 <script>
 (() => {
@@ -411,45 +492,51 @@ const DSP = (() => {
     return { f, midi: 69 + 12 * Math.log2(f / 440), conf: 1 - b };
   }
 
-  /* Note nouvellement attaquée : crible harmonique sur l'énergie apparue depuis l'attaque.
-     Robuste quand la note précédente sonne encore (jeu lié, pédale). */
-  function newNote(preDb, postDb, binHz, mLo = 28, mHi = 100) {
+  /* Énergie apparue depuis l'attaque (spectre après moins spectre avant), puis
+     score harmonique d'une note candidate sur cette énergie nouvelle. Robuste quand la note
+     précédente sonne encore (jeu lié, pédale). */
+  function diffSpec(preDb, postDb) {
     const n = postDb.length, diff = new Float64Array(n);
     for (let k = 1; k < n; k++) {
       const a = Math.pow(10, postDb[k] / 10), b = Math.pow(10, preDb[k] / 10);
       diff[k] = a > b ? Math.sqrt(a - b) : 0;
     }
-    const partials = m => {
-      const f0 = 440 * Math.pow(2, (m - 69) / 12), out = [];
-      for (let h = 1; h <= 8; h++) {
-        const f = f0 * h * (1 + 0.0004 * h * h);
-        if (f > 9000) break;
-        const k0 = f / binHz, tol = Math.max(1.5, k0 * 0.012);
-        let mx = 0;
-        for (let k = Math.max(1, Math.floor(k0 - tol)); k <= Math.min(n - 1, Math.ceil(k0 + tol)); k++) if (diff[k] > mx) mx = diff[k];
-        out.push(Math.sqrt(mx));
-      }
-      return out;
-    };
+    return diff;
+  }
+  function partials(diff, binHz, m, fOf, wide = false) {
+    const f0 = fOf ? fOf(m) : 440 * Math.pow(2, (m - 69) / 12), out = [], n = diff.length;
+    for (let h = 1; h <= 8; h++) {
+      const f = f0 * h * (1 + 0.0004 * h * h);
+      if (f > 9000) break;
+      const k0 = f / binHz, tol = Math.max(1.5, k0 * (wide ? 0.02 : 0.012));
+      let mx = 0;
+      for (let k = Math.max(1, Math.floor(k0 - tol)); k <= Math.min(n - 1, Math.ceil(k0 + tol)); k++) if (diff[k] > mx) mx = diff[k];
+      out.push(Math.sqrt(mx));
+    }
+    return out;
+  }
+  const psum = a => a.reduce((x, v) => x + v, 0);
+  function newNote(preDb, postDb, binHz, mLo = 28, mHi = 100, fOf = null, diff = null) {
+    diff = diff || diffSpec(preDb, postDb);
     let best = null;
     for (let m = mLo; m <= mHi; m++) {
-      const s = partials(m).reduce((a, v) => a + v, 0);
+      const s = psum(partials(diff, binHz, m, fOf));
       if (!best || s > best.s) best = { midi: m, s };
     }
     if (!best || best.s <= 0 || best.midi === mLo) return null;
     // Sous-harmonique ? Si les harmoniques impairs sont presque vides, la vraie note est une octave au-dessus.
     for (let k = 0; k < 2 && best.midi + 12 <= mHi; k++) {
-      const p = partials(best.midi);
+      const p = partials(diff, binHz, best.midi, fOf);
       let odd = 0, even = 0;
       p.forEach((v, i) => { if (i % 2 === 0) odd += v; else even += v; });
-      if (odd < 0.4 * even) best = { midi: best.midi + 12, s: partials(best.midi + 12).reduce((a, v) => a + v, 0) };
+      if (odd < 0.4 * even) best = { midi: best.midi + 12, s: psum(partials(diff, binHz, best.midi + 12, fOf)) };
       else break;
     }
     return best;
   }
 
   /* Profil de hauteurs (chroma) à partir d'un spectre en dB (AnalyserNode). */
-  function chroma(sp, binHz, fmin = 70, fmax = 4200) {
+  function chroma(sp, binHz, fmin = 70, fmax = 4200, quant = null) {
     const kLo = Math.max(2, Math.ceil(fmin / binHz)), kHi = Math.min(sp.length - 2, Math.floor(fmax / binHz));
     const c = new Float64Array(12), notes = new Float64Array(128);
     let mx = -400;
@@ -462,8 +549,9 @@ const DSP = (() => {
       const a = sp[k - 1], z = sp[k + 1], den = a - 2 * v + z;
       const sh = den < 0 ? 0.5 * (a - z) / den : 0;
       const f = (k + sh) * binHz;
-      const mf = 69 + 12 * Math.log2(f / 440), mr = Math.round(mf);
-      if (Math.abs(mf - mr) > 0.33 || mr < 0 || mr > 127) continue;
+      const mf = 69 + 12 * Math.log2(f / 440);
+      const mr = quant ? quant(mf, 0.4) : (Math.abs(mf - Math.round(mf)) <= 0.33 ? Math.round(mf) : null);
+      if (mr === null || mr < 0 || mr > 127) continue;
       const w = Math.pow(10, 0.6 * (v - mx) / 20);
       if (w > notes[mr]) notes[mr] = w;
     }
@@ -576,19 +664,68 @@ const DSP = (() => {
   const DYN = [['pp', -99, -13], ['p', -13, -7], ['mp', -7, -2.5], ['mf', -2.5, 2.5], ['f', 2.5, 8], ['ff', 8, 99]];
   const dynOf = rel => (DYN.find(d => rel >= d[1] && rel < d[2]) || DYN[rel < 0 ? 0 : 5])[0];
 
-  /* Décision pour une note : YIN si l'attaque part du silence, sinon le crible sur l'énergie nouvelle. */
-  function decideNote(yins, sieve, preDb, postDb) {
-    const y = yins.length ? Math.round(median(yins)) : null;
-    const overlap = preDb > postDb - 12;
-    if (y !== null && sieve && (y === sieve.midi)) return { midi: y, how: 'both' };
-    // Le crible se trompe parfois vers le bas (octave, douzième) : YIN gagne alors.
-    if (y !== null && sieve && [12, 19, 24, 28].includes(y - sieve.midi)) return { midi: y, how: 'yin' };
-    if (overlap && sieve) return { midi: sieve.midi, how: 'sieve' };
-    if (y !== null) return { midi: y, how: 'yin' };
-    return sieve ? { midi: sieve.midi, how: 'sieve' } : null;
+  /* Accord réel du piano : écart en cents de chaque touche, mesuré pendant le réglage.
+     Les touches non mesurées sont interpolées entre leurs voisines mesurées. */
+  function makeTuning(t) {
+    const notes = (t && t.notes) || {};
+    const keys = Object.keys(notes).map(Number).filter(k => isFinite(notes[k])).sort((a, b) => a - b);
+    const g = t && isFinite(t.global) ? t.global : 0;
+    const C = new Float64Array(128);
+    for (let m = 0; m < 128; m++) {
+      if (!keys.length) { C[m] = g; continue; }
+      if (notes[m] != null) { C[m] = notes[m]; continue; }
+      let lo = null, hi = null;
+      for (const k of keys) { if (k < m) lo = k; else if (k > m) { hi = k; break; } }
+      C[m] = lo === null ? notes[hi] : hi === null ? notes[lo] : notes[lo] + (notes[hi] - notes[lo]) * (m - lo) / (hi - lo);
+    }
+    const E = C.map((c, m) => m + c / 100);
+    const quant = (fm, tol = 0.5) => {
+      const c0 = Math.round(fm - g / 100);
+      let best = null, bd = 9;
+      for (let c = Math.max(0, c0 - 2); c <= Math.min(127, c0 + 2); c++) { const d = Math.abs(fm - E[c]); if (d < bd) { bd = d; best = c; } }
+      return bd <= tol ? best : null;
+    };
+    const fOf = m => 440 * Math.pow(2, (E[m] - 69) / 12);
+    return { cents: m => C[m], quant, fOf, global: g, n: keys.length };
   }
 
-  return { mean, median, percentile, std, linreg, yin, newNote, decideNote, chroma, matchChord, checkChord, Onsets, tempo, DYN, dynOf };
+  /* Décision pour une note. YIN propose des hauteurs au fil des trames ; le crible propose la note
+     dont les harmoniques sont apparus. S'il y a désaccord, c'est l'énergie nouvelle qui tranche. */
+  function decideNote(yins, preSp, postSp, binHz, preDb, peakDb, tun = null, lo = 21, hi = 108) {
+    const q = tun ? tun.quant : null, fOf = tun ? tun.fOf : null;
+    const cl = new Map();
+    yins.forEach((v, i) => {
+      let k = q ? q(v, 0.6) : null;
+      if (k === null) k = Math.round(v);
+      if (k < lo - 12 || k > hi + 12) return;
+      const c = cl.get(k) || { n: 0, first: i };
+      c.n++; cl.set(k, c);
+    });
+    const ranked = [...cl.entries()].sort((a, b) => b[1].n - a[1].n || a[1].first - b[1].first);
+    const overlap = preDb > peakDb - 12;
+    if (ranked.length === 1 && !overlap) return { midi: ranked[0][0], how: 'yin' };
+    if (!preSp || !postSp) return ranked.length ? { midi: ranked[0][0], how: 'yin' } : null;
+    const diff = diffSpec(preSp, postSp);
+    const sv = newNote(null, null, binHz, Math.max(21, lo - 6), Math.min(108, hi + 6), fOf, diff);
+    const cands = new Set(ranked.map(r => r[0]));
+    if (sv) { cands.add(sv.midi); cands.add(sv.midi - 1); cands.add(sv.midi + 1); }
+    if (!cands.size) return null;
+    let best = null;
+    for (const m of cands) {
+      if (m < 21 || m > 108) continue;
+      // amplitudes linéaires, pondérées vers les premiers harmoniques : le bruit ne pèse presque rien
+      const p = partials(diff, binHz, m, fOf, true).map(v => v * v);
+      let odd = 0, even = 0, s = 0;
+      p.forEach((v, i) => { s += v / Math.sqrt(i + 1); if (i % 2 === 0) odd += v; else even += v; });
+      if (odd < 0.4 * even) s *= 0.6;
+      if (cl.has(m) && cl.get(m).n >= 3) s *= 1.25;  // YIN l'a entendue sur plusieurs trames
+      if (!best || s > best.s * 1.04 || (s > best.s * 0.96 && cl.has(m) && !cl.has(best.midi))) best = { midi: m, s };
+    }
+    if (!best || best.s <= 0) return ranked.length ? { midi: ranked[0][0], how: 'yin' } : null;
+    return { midi: best.midi, how: cl.has(best.midi) ? 'both' : 'sieve' };
+  }
+
+  return { mean, median, percentile, std, linreg, yin, newNote, decideNote, makeTuning, chroma, matchChord, checkChord, Onsets, tempo, DYN, dynOf };
 })();
 if (typeof module !== 'undefined') module.exports = DSP;
 
@@ -765,6 +902,8 @@ const TERMS = [
   ['cantabile', 'cantabile', 'Caractère', 'Chantant : faire chanter la mélodie.'],
   ['espressivo', 'espressivo', 'Caractère', 'Expressif. Abréviation : espr.'],
   ['conanima', 'con anima', 'Caractère', 'Avec âme, avec élan.'],
+  ['conespr', 'con espressione', 'Caractère', 'Avec expression : la mélodie doit parler.'],
+  ['conforza', 'con forza', 'Caractère', 'Avec force.'],
   ['confuoco', 'con fuoco', 'Caractère', 'Avec feu, fougueux.'],
   ['grazioso', 'grazioso', 'Caractère', 'Gracieux.'],
   ['sostenuto', 'sostenuto', 'Caractère', 'Soutenu : un son plein et tenu, sans se presser.'],
@@ -798,7 +937,7 @@ const TERMS = [
 ].map(([id, name, cat, def]) => ({ id, name, cat, def }));
 const TERM = Object.fromEntries(TERMS.map(t => [t.id, t]));
 const CURRICULUM = ['p', 'f', 'cresc', 'mf', 'decresc', 'tdv', 'subito', 'sf', 'rall', 'accel', 'atempo', 'rubato', 'pp', 'ff', 'dim',
-  'mp', 'legato', 'dolce', 'andante', 'moderato', 'staccato', 'cantabile', 'lento', 'allegro', 'espressivo', 'conanima', 'poco', 'rit',
+  'mp', 'legato', 'dolce', 'andante', 'moderato', 'staccato', 'cantabile', 'lento', 'allegro', 'espressivo', 'conanima', 'conespr', 'conforza', 'poco', 'rit',
   'riten', 'ped', 'm34', 'armure', 'fermata', 'tempoprimo', 'sostenuto', 'sottovoce', 'morendo', 'smorzando', 'calando', 'fp', 'tenuto',
   'accent', 'marcato', 'leggiero', 'portato', 'menomosso', 'piumosso', 'stringendo', 'allargando', 'adagio', 'largo', 'allegretto',
   'vivace', 'presto', 'grazioso', 'agitato', 'tranquillo', 'maestoso', 'scherzando', 'brillante', 'confuoco', 'mezzavoce', 'unacorda',
@@ -808,7 +947,8 @@ const termChip = (id, label) => `<button type="button" class="term" data-term="$
 
 /* ---------- Enregistrement local des progrès ---------- */
 const LS = 'pupitre-v1';
-const fresh = () => ({ v: 1, notes: {}, ch: {}, days: {}, hist: [], cfg: {}, vocab: { box: {}, seen: {}, session: null, next: 0 }, dyn: { ref: null, at: 0 }, tempo: { target: 96, meter: 3, ex: 'stable' }, last: 0 });
+let TUNE = null;
+const fresh = () => ({ v: 1, notes: {}, ch: {}, days: {}, hist: [], cfg: {}, vocab: { box: {}, seen: {}, session: null, next: 0 }, dyn: { ref: null, at: 0 }, tempo: { target: 96, meter: 3, ex: 'stable' }, tune: null, valse: {}, last: 0 });
 let P = fresh();
 let localOK = false;
 try {
@@ -817,6 +957,7 @@ try {
   localStorage.setItem(LS + '-t', '1'); localStorage.removeItem(LS + '-t');
   localOK = true;
 } catch (e) { localOK = false; }
+TUNE = DSP.makeTuning(P.tune);
 function save() {
   if (!localOK) return;
   try { localStorage.setItem(LS, JSON.stringify(P)); } catch (e) { /* plein */ }
@@ -974,7 +1115,7 @@ const Ear = {
   },
   yin(lo, hi) { this.C.getFloatTimeDomainData(this.tdC); return DSP.yin(this.tdC, this.sr, lo, hi); },
   specB() { return Float32Array.from(this.ringB[this.ringB.length - 1]); },
-  chroma() { return DSP.chroma(this.ringB[this.ringB.length - 1], this.sr / 16384).c; },
+  chroma() { return DSP.chroma(this.ringB[this.ringB.length - 1], this.sr / 16384, 70, 4200, TUNE.quant).c; },
   binB() { return this.sr / 16384; },
   on(fn) { this.subs.add(fn); return () => this.subs.delete(fn); },
   emit(type, data) { for (const fn of Array.from(this.subs)) { try { fn(type, data); } catch (e) { console.error(e); } } },
@@ -998,23 +1139,24 @@ function noteAttemptTick(a, now, db) {
   if (dt >= 90 && dt <= 200) { const r = Ear.yin(mtof(a.lo - 7), mtof(a.hi + 7)); if (r && r.conf > 0.8) a.yins.push(r.midi); }
   if (dt >= 300 && !a.post) {
     a.post = Ear.specB();
-    const sv = DSP.newNote(a.pre, a.post, Ear.binB(), a.lo - 6, a.hi + 6);
-    return DSP.decideNote(a.yins, sv, a.preDb, a.peak) || { midi: null };
+    return DSP.decideNote(a.yins, a.pre, a.post, Ear.binB(), a.preDb, a.peak, TUNE, a.lo - 6, a.hi + 6) || { midi: null };
   }
   return null;
 }
 
 /* ---------- Navigation ---------- */
 let view = 'home', after = null;
-const NEEDS_MIC = { drill: 1, free: 1, tempo: 1, dyn: 1 };
+const NEEDS_MIC = { drill: 1, free: 1, tempo: 1, dyn: 1, tune: 1, vpass: 1 };
 function show(v) {
   if (NEEDS_MIC[v] && Ear.state !== 'on') { after = v; v = 'mic'; }
   if (view === 'drill' && v !== 'drill' && S && S.active) endSession(false, true);
   if (view === 'tempo' && v !== 'tempo') tempoStop(true);
   if (view === 'dyn' && v !== 'dyn') dynAbort();
+  if (view === 'vpass' && v !== 'vpass') vStop();
+  if (view === 'tune' && v !== 'tune' && TU.run) { TU.run = null; }
   view = v;
   $$('.view').forEach(el => { el.hidden = el.id !== 'v-' + v; });
-  ({ home: renderHome, mic: renderMic, free: freeEnter, tempo: tempoEnter, dyn: dynEnter, vocab: vocabEnter, progress: renderProgress })[v]?.();
+  ({ home: renderHome, mic: renderMic, free: freeEnter, tempo: tempoEnter, dyn: dynEnter, vocab: vocabEnter, progress: renderProgress, tune: tuneEnter, valse: valseEnter, vpass: vpassEnter })[v]?.();
   window.scrollTo(0, 0);
 }
 function refreshMic() {
@@ -1034,9 +1176,17 @@ const TERM_EX = { p: ['dyn', 'hold', 'p'], f: ['dyn', 'hold', 'f'], pp: ['dyn', 
   rall: ['tempo', 'rall'], rit: ['tempo', 'rall'], accel: ['tempo', 'accel'], stringendo: ['tempo', 'accel'],
   lento: ['tempo', 'stable', 52], adagio: ['tempo', 'stable', 66], andante: ['tempo', 'stable', 80], moderato: ['tempo', 'stable', 100],
   allegretto: ['tempo', 'stable', 112], allegro: ['tempo', 'stable', 126], tdv: ['tempo', 'stable'] };
+function tuneSummary() {
+  if (!P.tune) return '';
+  const g = P.tune.global, la = 440 * Math.pow(2, g / 1200);
+  return `Réglé le ${new Date(P.tune.at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} sur ${Object.keys(P.tune.notes).length} touches · La à ${Math.round(la)}${NB}Hz`;
+}
+const TUNE_HINT = '<p class="warnline">Ton piano n’est pas encore réglé dans Pupitre : des notes justes peuvent être comptées fausses. <button type="button" class="link" data-go="tune">Régler maintenant</button></p>';
 function renderHome() {
   ensureSession();
   refreshMic();
+  $('#h-tune').innerHTML = P.tune ? '' : `<div class="tunecard"><span class="lbl">Étape 1</span><p><b>Règle Pupitre sur ton piano.</b> Il n’est pas accordé : Pupitre doit apprendre la vraie hauteur de chaque touche, sinon il compte faux des notes justes.</p><button type="button" class="primary live" data-go="tune">Régler sur mon piano</button></div>`;
+  $('#h-tunestat').textContent = P.tune ? tuneSummary() : 'Pas encore réglé : à faire en premier.';
   const S0 = P.vocab.session;
   $('#h-terms').innerHTML = S0.terms.map(id => {
     const t = TERM[id];
@@ -1124,6 +1274,7 @@ function renderSetup() {
   const M = MODES[curMode], cfg = cfgOf(curMode);
   $('#s-title').textContent = M.title;
   $('#s-desc').textContent = M.desc;
+  $('#s-tune').innerHTML = P.tune ? '' : TUNE_HINT;
   $('#s-opts').innerHTML = MODE_OPTS[curMode].map(k => {
     const O = OPTS[k];
     const btns = O.choices.map(([v, lab]) => `<button type="button" data-k="${k}" data-v="${v}" aria-pressed="${String(cfg[k]) === String(v)}">${k === 'dur' && v === '25' ? '25 ' + M.unit : lab}</button>`).join('');
@@ -1752,7 +1903,8 @@ function renderProgress() {
   for (const k in P.ch) okc += P.ch[k].ok;
   const known = Object.values(P.vocab.box).filter(b => b >= 3).length;
   const st = streakDays();
-  $('#p-tiles').innerHTML = [[st, st > 1 ? 'jours d’affilée' : 'jour d’affilée'], [n, 'notes jouées en Lecture'], [okc, 'accords réussis'], [`${known}/${Object.keys(P.vocab.box).length}`, 'termes acquis']]
+  const vdone = Object.values(P.valse || {}).filter(v => v.b && v.b.ok).length;
+  $('#p-tiles').innerHTML = [[st, st > 1 ? 'jours d’affilée' : 'jour d’affilée'], [vdone, 'passages de la valse acquis aux deux mains'], [n, 'notes jouées en Lecture'], [okc, 'accords réussis'], [`${known}/${Object.keys(P.vocab.box).length}`, 'termes acquis']]
     .map(([b, s]) => `<div class="tile"><b>${b}</b><span>${s}</span></div>`).join('');
   for (const s of ['t', 'b']) {
     const [lo, hi] = RANGE[s][2], cols = [];
@@ -1760,9 +1912,361 @@ function renderProgress() {
     $('#p-heat-' + s).innerHTML = score({ staves: [s], key: 'C', ext: { [s]: [lo, hi] }, cols, labels: 2, lead: 4, aria: 'Carte des notes' });
   }
   $('#p-ch').innerHTML = DEGREES.map(dg => { const r = P.ch['c' + dg.id], m = mastery(r); return `<span class="pill m${m}"><b>${dg.id} · ${chordShort('Ab', dg)}</b><span>${r && r.n ? `${r.ok}/${r.n} justes` : 'pas encore joué'}</span></span>`; }).join('');
-  const NAME = { lecture: 'Lecture', accords: 'Accords', tempo: 'Tempo', dyn: 'Nuances' };
+  const NAME = { lecture: 'Lecture', accords: 'Accords', tempo: 'Tempo', dyn: 'Nuances', tune: 'Réglage', valse: 'Valse' };
   $('#p-hist').innerHTML = P.hist.slice(-10).reverse().map(h => `<div><span>${NAME[h.m] || h.m} · ${esc(h.text)}</span><span class="muted">${new Date(h.t).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}</span></div>`).join('') || '<p class="muted">Pas encore de séance.</p>';
   const rb = $('#p-reset'); rb.classList.remove('armed'); rb.textContent = 'Effacer mes progrès';
+}
+
+/* ---------- Réglage du piano : vraie hauteur de chaque touche ---------- */
+const TUNE_KEYS = { quick: [60, 72], full: [31, 90] };
+const SPELL = [[0, 0], [1, -1], [1, 0], [2, -1], [2, 0], [3, 0], [4, -1], [4, 0], [5, -1], [5, 0], [6, -1], [6, 0]];
+const SHARP_NAME = { 1: 'Do♯', 3: 'Ré♯', 6: 'Fa♯', 8: 'Sol♯', 10: 'La♯' };
+const BLACKS = [[1, 1], [3, 2], [6, 4], [8, 5], [10, 6]];
+const WHITES = [0, 2, 4, 5, 7, 9, 11];
+let TU = { run: null, off: null };
+function octaveHint(m) {
+  const k = Math.floor((m - 60) / 12);
+  const n = ['', 'une', 'deux', 'trois', 'quatre'][Math.abs(k)];
+  return k === 0 ? 'octave du Do central' : k > 0 ? `${n} octave${k > 1 ? 's' : ''} au-dessus du Do central` : `${n} octave${k < -1 ? 's' : ''} sous le Do central`;
+}
+function keyStaff(m, cls) {
+  const [L, a] = SPELL[m % 12], d = (Math.floor(m / 12) - 1) * 7 + L, s = m >= 60 ? 't' : 'b';
+  const ext = { t: [Math.min(30, s === 't' ? d : 30), Math.max(38, s === 't' ? d : 38)], b: [Math.min(18, s === 'b' ? d : 18), Math.max(26, s === 'b' ? d : 26)] };
+  return score({ staves: ['t', 'b'], key: 'C', ext, colW: 70, aria: 'Touche à jouer', cols: [{ staff: s, heads: [{ d, acc: a ? accGlyph(a) : null, cls: cls || 'cur' }] }] });
+}
+function tuneEnter() {
+  if (!TU.off) TU.off = Ear.on(tuneEar);
+  TU.run = null;
+  $('#g-home').hidden = false; $('#g-run').hidden = true; $('#g-count').textContent = '';
+  const t = P.tune;
+  $('#g-clear').hidden = !t;
+  if (!t) { $('#g-status').innerHTML = ''; return; }
+  const g = t.global, la = 440 * Math.pow(2, g / 1200);
+  const worst = Object.entries(t.notes).map(([m, c]) => [Number(m), c]).filter(([, c]) => Math.abs(c - g) >= 20)
+    .sort((a, b) => Math.abs(b[1] - g) - Math.abs(a[1] - g)).slice(0, 6);
+  $('#g-status').innerHTML = `<div class="card"><span class="lbl">Réglage actuel</span><p>${esc(tuneSummary())}.</p>` +
+    `<p>En moyenne, ton piano est <b>${Math.abs(Math.round(g))} cents trop ${g < 0 ? 'bas' : 'haut'}</b>${Math.abs(g) >= 15 ? ' : il a besoin d’un accordeur, mais Pupitre s’en accommode.' : '.'}</p>` +
+    (worst.length ? `<p class="muted small">Touches les plus fausses par rapport aux autres : ${worst.map(([m, c]) => `${PCN.Ab[m % 12]} (${octaveHint(m)}) ${c > g ? '+' : '−'}${Math.abs(Math.round(c - g))}`).join(' · ')} cents.</p>` : '') +
+    tuneChart(t) + '</div>';
+}
+function tuneChart(t) {
+  const ks = Object.keys(t.notes).map(Number).sort((a, b) => a - b);
+  if (ks.length < 2) return '';
+  const W = 320, H = 110, pl = 30, pr = 6, pt = 8, pb = 16, lo = -100, hi = 60;
+  const X = m => pl + (m - ks[0]) / Math.max(1, ks[ks.length - 1] - ks[0]) * (W - pl - pr);
+  const Y = c => pt + (hi - Math.max(lo, Math.min(hi, c))) / (hi - lo) * (H - pt - pb);
+  const bw = Math.max(2, (W - pl - pr) / ks.length - 1);
+  let svg = `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Écart de chaque touche en cents">`;
+  svg += `<line x1="${pl}" x2="${W - pr}" y1="${r2(Y(0))}" y2="${r2(Y(0))}" stroke="currentColor" stroke-opacity=".4"/>`;
+  svg += `<line x1="${pl}" x2="${W - pr}" y1="${r2(Y(t.global))}" y2="${r2(Y(t.global))}" style="stroke:var(--accent)" stroke-dasharray="3 3"/>`;
+  for (const m of ks) {
+    const c = t.notes[m], y0 = Y(0), y1 = Y(c), off = Math.abs(c - t.global);
+    svg += `<rect x="${r2(X(m) - bw / 2)}" y="${r2(Math.min(y0, y1))}" width="${r2(bw)}" height="${r2(Math.max(1, Math.abs(y1 - y0)))}" style="fill:${off >= 30 ? 'var(--bad)' : off >= 15 ? 'var(--warn)' : 'var(--ok)'}"/>`;
+  }
+  svg += `<text x="${pl - 4}" y="${r2(Y(0) + 4)}" font-size="10" text-anchor="end" fill="currentColor">0</text><text x="${pl - 4}" y="${r2(Y(-100) + 4)}" font-size="10" text-anchor="end" fill="currentColor">−100</text>`;
+  svg += `<text x="${pl}" y="${H - 3}" font-size="10" fill="currentColor" fill-opacity=".6">grave</text><text x="${W - pr}" y="${H - 3}" font-size="10" text-anchor="end" fill="currentColor" fill-opacity=".6">aigu</text></svg>`;
+  return svg + '<p class="muted small">Chaque barre : l’écart d’une touche avec la note juste, en cents (100 cents = un demi-ton). Pointillés : la moyenne de ton piano.</p>';
+}
+function tuneStart(mode) {
+  const [a, b] = TUNE_KEYS[mode], keys = [];
+  for (let m = a; m <= b; m++) keys.push(m);
+  TU.run = { mode, keys, i: 0, notes: {}, devs: [], att: null, armAt: performance.now() + 400 };
+  $('#g-home').hidden = true; $('#g-run').hidden = false;
+  tuneStep();
+}
+function tuneStep() {
+  const R = TU.run, m = R.keys[R.i], pcv = m % 12;
+  $('#g-count').textContent = `${R.i + 1}/${R.keys.length}`;
+  $('#g-bar').style.width = (R.i / R.keys.length * 100) + '%';
+  $('#g-score').innerHTML = keyStaff(m);
+  $('#g-name').textContent = PCN.Ab[pcv];
+  $('#g-oct').textContent = (SHARP_NAME[pcv] ? `ou ${SHARP_NAME[pcv]} · ` : '') + octaveHint(m);
+  $('#g-kb').innerHTML = WHITES.map(w => `<span class="${w === pcv ? 'on' : ''}"></span>`).join('') +
+    BLACKS.map(([bp, i]) => `<b class="${bp === pcv ? 'on' : ''}" style="left:calc(${(i / 7 * 100).toFixed(3)}% - var(--bkw) / 2)"></b>`).join('');
+  earMsg($('#g-ear'), 'J’écoute…');
+}
+function tuneEar(type, e) {
+  if (view !== 'tune') return;
+  const el = $('#g-ear');
+  if (type === 'tick') earUI(el, e.db);
+  const R = TU.run;
+  if (!R || R.done) return;
+  const m = R.keys[R.i];
+  if (type === 'tick' && R.att) {
+    const dt = e.t - R.att.t;
+    if (dt >= 120 && dt <= 600) { const r = Ear.yin(mtof(m - 3), mtof(m + 3)); if (r && r.conf > 0.85) R.att.ys.push(r.midi); }
+    if (dt > 620) { const a = R.att; R.att = null; tuneJudge(a); }
+    return;
+  }
+  if (type === 'attack' && !R.att && e.t >= R.armAt) { earHit(el); earMsg(el, 'Je mesure…'); R.att = { t: e.t, ys: [] }; }
+}
+function tuneJudge(a) {
+  const R = TU.run, m = R.keys[R.i], name = PCN.Ab[m % 12], fb = $('#g-fb');
+  if (a.ys.length < 3) { fb.className = 'fb info'; fb.textContent = 'Je n’ai pas bien entendu : rejoue la touche, un peu plus fort.'; R.armAt = performance.now() + 150; earMsg($('#g-ear'), 'J’écoute…'); return; }
+  const fm = DSP.median(a.ys), dev = (fm - m) * 100;
+  const g = R.devs.length ? DSP.median(R.devs) : 0, lim = R.devs.length >= 3 ? 80 : 130;
+  if (Math.abs(dev - g) > lim) {
+    fb.className = 'fb bad';
+    fb.textContent = `Ce n’est pas ${name} : j’entends plutôt ${PCN.Ab[((Math.round(fm - g / 100)) % 12 + 12) % 12]}. Rejoue ${name}.`;
+    R.armAt = performance.now() + 200; earMsg($('#g-ear'), 'J’écoute…');
+    return;
+  }
+  R.notes[m] = Math.round(dev * 10) / 10;
+  R.devs.push(dev);
+  fb.className = 'fb ok';
+  fb.textContent = Math.abs(dev) < 6 ? `${name} : juste` : `${name} : ${Math.abs(Math.round(dev))} cents trop ${dev < 0 ? 'bas' : 'haut'}`;
+  tuneNext();
+}
+function tuneNext() {
+  const R = TU.run;
+  R.i++;
+  if (R.i >= R.keys.length) { tuneFinish(); return; }
+  R.armAt = performance.now() + 450;
+  setTimeout(() => { if (TU.run === R) tuneStep(); }, 350);
+}
+function tuneFinish() {
+  const R = TU.run;
+  R.done = true;
+  if (R.devs.length < 3) { $('#g-fb').textContent = 'Trop peu de touches mesurées : recommence le réglage.'; return; }
+  const prev = P.tune && P.tune.notes ? P.tune.notes : {};
+  const notes = R.mode === 'quick' ? Object.assign({}, prev, R.notes) : R.notes;
+  P.tune = { at: Date.now(), mode: R.mode, notes, global: DSP.median(Object.values(notes)) };
+  TUNE = DSP.makeTuning(P.tune);
+  addHist('tune', `réglage ${R.mode === 'quick' ? 'rapide' : 'complet'} : ${Object.keys(R.notes).length} touches, moyenne ${Math.round(P.tune.global)} cents`);
+  save();
+  $('#g-fb').className = 'fb ok';
+  $('#g-fb').textContent = 'Réglage enregistré.';
+  setTimeout(() => { if (view === 'tune') tuneEnter(); }, 900);
+}
+
+/* ---------- Son (écoute d'un passage) ---------- */
+const Synth = {
+  own: null,
+  ctx() {
+    if (Ear.ctx) return Ear.ctx;
+    if (!this.own) { const C = window.AudioContext || window.webkitAudioContext; if (C) this.own = new C(); }
+    return this.own;
+  },
+  note(m, when, dur) {
+    const ctx = this.ctx();
+    if (!ctx) return;
+    const f = 440 * Math.pow(2, (m - 69) / 12), t = when;
+    const out = ctx.createGain();
+    out.gain.setValueAtTime(0.0001, t);
+    out.gain.exponentialRampToValueAtTime(0.22, t + 0.01);
+    out.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(Math.min(9000, f * 8), t);
+    lp.frequency.exponentialRampToValueAtTime(Math.max(400, f * 2), t + dur);
+    lp.connect(out); out.connect(ctx.destination);
+    [[1, 'triangle', 0.9], [2, 'sine', 0.3], [3, 'sine', 0.12]].forEach(([k, type, a]) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = type; o.frequency.value = f * k; g.gain.value = a;
+      o.connect(g); g.connect(lp); o.start(t); o.stop(t + dur + 0.05);
+    });
+  },
+};
+
+/* ---------- Valse de l'adieu ---------- */
+let VD = null, VW = { run: null, off: null, playing: false, timers: [] }, VP = 0;
+const HANDS = [['r', 'Main droite'], ['l', 'Main gauche'], ['b', 'Les deux']];
+async function valseLoad() {
+  if (VD) return VD;
+  const r = await fetch('valse.json');
+  if (!r.ok) throw new Error(String(r.status));
+  VD = await r.json();
+  $('#vdefs defs').innerHTML = VD.defs;
+  return VD;
+}
+const origOf = i => (VD.passages[i].same == null ? i : VD.passages[i].same);
+const vstat = (i, h) => ((P.valse[origOf(i)] || {})[h]) || null;
+function valseEnter() {
+  $('#vl-tune').innerHTML = P.tune ? '' : TUNE_HINT;
+  if (VD) { renderValseList(); return; }
+  $('#vl-list').innerHTML = '<p class="muted">Chargement de la partition…</p>';
+  valseLoad().then(renderValseList).catch(() => { $('#vl-list').innerHTML = '<p class="warnline">Impossible de charger la partition. Vérifie ta connexion, puis réessaie.</p>'; });
+}
+function renderValseList() {
+  const ps = VD.passages, uniq = ps.map((p, i) => i).filter(i => ps[i].same == null);
+  const n = h => uniq.filter(i => (vstat(i, h) || {}).ok).length;
+  $('#vl-tiles').innerHTML = [[`${uniq.length}`, `passages différents sur ${ps.length} (les autres se répètent)`], [`${n('r')}/${uniq.length}`, 'appris main droite'], [`${n('l')}/${uniq.length}`, 'appris main gauche'], [`${n('b')}/${uniq.length}`, 'appris aux deux mains']]
+    .map(([b, s]) => `<div class="tile"><b>${b}</b><span>${s}</span></div>`).join('');
+  $('#vl-list').innerHTML = ps.map((p, i) => {
+    const sts = HANDS.map(([h, lab]) => `<span class="st${(vstat(i, h) || {}).ok ? ' ok' : ''}">${h === 'r' ? 'MD' : h === 'l' ? 'MG' : '2 mains'}${(vstat(i, h) || {}).ok ? ' ✓' : ''}</span>`).join('');
+    const same = p.same != null ? `Même musique que ${ps[p.same].label.toLowerCase().replace('levée et mesures', 'la levée et les mesures')}.` : '';
+    const terms = p.terms.filter(t => TERM[t]).map(t => `<i>${esc(TERM[t].name)}</i>`).join(', ');
+    return `<button type="button" class="vrow" data-vp="${i}"><span class="vt">${esc(p.label)}</span><span class="sts">${sts}</span>${same || terms ? `<span class="vm">${same ? esc(same) + ' ' : ''}${terms ? 'Termes : ' + terms : ''}</span>` : ''}</button>`;
+  }).join('');
+  $('#vl-credit').textContent = VD.credit;
+}
+function openPassage(i) { VP = i; show('vpass'); }
+function vpassEnter() {
+  if (!VD) { valseLoad().then(() => vpassEnter()).catch(() => show('valse')); return; }
+  if (!VW.off) VW.off = Ear.on(valseEar);
+  vStop();
+  const p = VD.passages[VP], hand = P.cfg.vhand || 'r';
+  $('#vp-title').textContent = p.label;
+  $('#vp-score').innerHTML = p.svg;
+  $('#vp-hand').innerHTML = HANDS.map(([h, lab]) => `<button type="button" data-hand="${h}" aria-pressed="${h === hand}">${lab}</button>`).join('');
+  const same = $('#vp-same');
+  same.hidden = p.same == null;
+  if (p.same != null) same.textContent = `Même musique que ${VD.passages[p.same].label.toLowerCase().replace('levée et mesures', 'la levée et les mesures')} : ce que tu y as appris compte ici aussi.`;
+  // Termes du passage : ajoutés au lexique dès qu'on les rencontre.
+  const V = P.vocab, fresh = [];
+  for (const t of p.terms) if (TERM[t] && !V.seen[t]) { V.seen[t] = Date.now(); V.box[t] = 0; if (V.session) { V.session.terms.push(t); V.session.fresh.push(t); } fresh.push(t); }
+  if (fresh.length) save();
+  const ts = p.terms.filter(t => TERM[t]);
+  $('#vp-terms').innerHTML = ts.length ? `Dans ce passage : ${ts.map(t => termChip(t) + (fresh.includes(t) ? '<span class="new">nouveau</span>' : '')).join(', ')}` : '';
+  $('#vp-prev').disabled = VP === 0;
+  $('#vp-next').disabled = VP === VD.passages.length - 1;
+  vReset();
+}
+function vseq(p, hand) {
+  const out = [];
+  for (const e of p.ev) {
+    const ms = hand === 'r' ? e.r : hand === 'l' ? e.l : e.r.concat(e.l);
+    const ids = hand === 'r' ? e.ri : hand === 'l' ? e.li : e.ri.concat(e.li);
+    if (ms.length) out.push({ ms, ids, q: e.q, pcs: Array.from(new Set(ms.map(m => m % 12))) });
+  }
+  return out;
+}
+function vMark(ids, cls, on) { for (const id of ids) { const el = document.getElementById(id); if (el) el.classList.toggle(cls, on); } }
+function vClear() { $$('#vp-score g.note').forEach(el => el.classList.remove('cur', 'done', 'miss', 'play')); }
+function vReset() {
+  vClear();
+  const p = VD.passages[VP], seq = vseq(p, P.cfg.vhand || 'r');
+  $('#vp-count').textContent = `0/${seq.length}`;
+  $('#vp-go').textContent = 'Jouer';
+  const st = vstat(VP, P.cfg.vhand || 'r');
+  $('#vp-fb').className = 'fb info';
+  $('#vp-fb').textContent = st ? `Dernier essai : ${st.err} faute${st.err > 1 ? 's' : ''}${st.ok ? ', passage acquis' : ''}.` : 'Touche « Jouer », puis joue lentement, note par note.';
+}
+function vStart() {
+  const p = VD.passages[VP], hand = P.cfg.vhand || 'r', seq = vseq(p, hand);
+  if (!seq.length) return;
+  vStopPlay();
+  vClear();
+  const all = seq.flatMap(s => s.ms);
+  VW.run = { hand, seq, i: 0, err: 0, t0: performance.now(), att: null, armAt: performance.now() + 300, lo: Math.min(...all) - 2, hi: Math.max(...all) + 2 };
+  $('#vp-go').textContent = 'Arrêter';
+  $('#vp-fb').className = 'fb info';
+  $('#vp-fb').textContent = 'Joue la note en bleu.';
+  vShow();
+}
+function vShow() {
+  const R = VW.run, s = R.seq[R.i];
+  vMark(s.ids, 'cur', true);
+  $('#vp-count').textContent = `${R.i}/${R.seq.length}`;
+}
+function vStop() {
+  if (VW.run) { VW.run = null; }
+  vStopPlay();
+  if ($('#vp-go')) $('#vp-go').textContent = 'Jouer';
+}
+function vStopPlay() {
+  VW.timers.forEach(clearTimeout);
+  VW.timers = [];
+  VW.playing = false;
+  $$('#vp-score g.note.play').forEach(el => el.classList.remove('play'));
+  if ($('#vp-listen')) $('#vp-listen').textContent = 'Écouter';
+}
+function valseEar(type, e) {
+  if (view !== 'vpass') return;
+  const el = $('#vp-ear');
+  if (type === 'tick') { earUI(el, e.db); earMsg(el, VW.playing ? 'Écoute du passage…' : VW.run ? 'J’écoute…' : 'Micro prêt'); }
+  const R = VW.run;
+  if (!R || R.done || VW.playing) return;
+  const step = R.seq[R.i];
+  if (type === 'tick' && R.att) {
+    if (step.ms.length === 1) {
+      const r = noteAttemptTick(R.att, e.t, e.db);
+      if (r) { R.att = null; vJudge(r.midi == null ? null : [r.midi], null); }
+    } else {
+      const dt = e.t - R.att.t;
+      if (dt >= 140 && dt <= 560 && Math.round(dt / 20) % 2 === 0) R.att.cs.push(Ear.chroma());
+      if (dt > 560) {
+        const a = R.att; R.att = null;
+        if (!a.cs.length) return;
+        const c = new Float64Array(12);
+        for (const v of a.cs) for (let i = 0; i < 12; i++) c[i] += v[i];
+        const mx = Math.max(...c) || 1;
+        for (let i = 0; i < 12; i++) c[i] /= mx;
+        vJudge(null, DSP.checkChord(c, step.pcs));
+      }
+    }
+    return;
+  }
+  if (type === 'attack' && !R.att && e.t >= R.armAt) {
+    earHit(el);
+    R.att = step.ms.length === 1 ? noteAttempt(e, R.lo, R.hi) : { t: e.t, cs: [] };
+  }
+}
+function vJudge(heard, chord) {
+  const R = VW.run, step = R.seq[R.i], fb = $('#vp-fb');
+  let ok;
+  if (chord) ok = chord.missing.length === 0;
+  else if (!heard) { fb.className = 'fb info'; fb.textContent = 'Je n’ai pas bien entendu : rejoue la note.'; R.armAt = performance.now() + 120; return; }
+  else { const t = step.ms[0], m = heard[0]; ok = m === t || (t < 48 && m === t + 12); }
+  if (ok) {
+    vMark(step.ids, 'cur', false);
+    vMark(step.ids, 'done', true);
+    R.i++;
+    fb.className = 'fb ok';
+    fb.textContent = step.ms.length === 1 ? PCN.Ab[step.ms[0] % 12] : step.pcs.map(p => PCN.Ab[p]).join(' + ');
+    if (R.i >= R.seq.length) { vDone(); return; }
+    R.armAt = performance.now() + 80;
+    vShow();
+    return;
+  }
+  R.err++;
+  vMark(step.ids, 'miss', true);
+  setTimeout(() => vMark(step.ids, 'miss', false), 700);
+  fb.className = 'fb bad';
+  if (chord) {
+    const heardTxt = chord.heard.map(p => PCN.Ab[p]).join(', ') || 'rien de net';
+    fb.textContent = `Il manque ${chord.missing.map(p => PCN.Ab[p]).join(', ')}. J’entends ${heardTxt}.`;
+  } else {
+    const t = step.ms[0], m = heard[0];
+    fb.textContent = (m - t) % 12 === 0 ? `Bonne note, mais ${gapName(m - t)}.` : `J’entends ${PCN.Ab[m % 12]}, il faut ${PCN.Ab[t % 12]} (${gapName(m - t)}).`;
+  }
+  R.armAt = performance.now() + 150;
+}
+function vDone() {
+  const R = VW.run, ms = performance.now() - R.t0, ok = R.err <= 2;
+  R.done = true;
+  const o = origOf(VP);
+  P.valse[o] = Object.assign({}, P.valse[o] || {}, { [R.hand]: { ok: ok || !!((P.valse[o] || {})[R.hand] || {}).ok, err: R.err, ms: Math.round(ms), at: Date.now() } });
+  logDay(ok);
+  addHist('valse', `${VD.passages[VP].label}, ${HANDS.find(h => h[0] === R.hand)[1].toLowerCase()} : ${R.err} faute${R.err > 1 ? 's' : ''}`);
+  save();
+  $('#vp-count').textContent = `${R.seq.length}/${R.seq.length}`;
+  $('#vp-go').textContent = 'Recommencer';
+  const fb = $('#vp-fb');
+  fb.className = 'fb ' + (ok ? 'ok' : 'bad');
+  fb.textContent = ok
+    ? `Passage joué en entier : ${R.err} faute${R.err > 1 ? 's' : ''}, ${Math.round(ms / 1000)} s.${R.hand === 'r' ? ' Passe à la main gauche.' : R.hand === 'l' ? ' Essaie les deux mains.' : ' Passage acquis : passe au suivant.'}`
+    : `${R.err} fautes : refais-le lentement avant de passer à la suite.`;
+  VW.run = null;
+}
+function vListen() {
+  if (VW.playing) { vStopPlay(); return; }
+  if (VW.run) vStop();
+  const p = VD.passages[VP], seq = vseq(p, P.cfg.vhand || 'r'), ctx = Synth.ctx();
+  if (!ctx || !seq.length) return;
+  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+  vClear();
+  VW.playing = true;
+  $('#vp-listen').textContent = 'Arrêter l’écoute';
+  const bpm = 72, t0 = ctx.currentTime + 0.2, sec = q => q * 60 / bpm;
+  seq.forEach((st, k) => {
+    const next = k + 1 < seq.length ? seq[k + 1].q : st.q + 1;
+    const dur = Math.max(0.3, sec(next - st.q) + 0.25);
+    st.ms.forEach(m => Synth.note(m, t0 + sec(st.q), dur));
+    VW.timers.push(setTimeout(() => { vMark(st.ids, 'play', true); VW.timers.push(setTimeout(() => vMark(st.ids, 'play', false), Math.max(200, sec(next - st.q) * 1000))); }, (sec(st.q) + 0.2) * 1000));
+  });
+  const end = sec(seq[seq.length - 1].q + 1) + 0.6;
+  VW.timers.push(setTimeout(() => vStopPlay(), end * 1000));
 }
 
 /* ---------- Événements ---------- */
@@ -1855,12 +2359,29 @@ $('#p-reset').addEventListener('click', e => {
   save();
   renderProgress();
 });
+$('#v-tune').addEventListener('click', e => {
+  const b = e.target.closest('[data-tune]');
+  if (b) { tuneStart(b.dataset.tune); return; }
+  if (e.target.closest('#g-skip') && TU.run && !TU.run.done) { TU.run.att = null; $('#g-fb').className = 'fb info'; $('#g-fb').textContent = 'Touche passée : Pupitre utilisera ses voisines.'; tuneNext(); return; }
+  if (e.target.closest('#g-stop')) { const R = TU.run; if (R && R.devs.length >= 3) { R.keys = R.keys.slice(0, R.i); tuneFinish(); } else tuneEnter(); return; }
+  if (e.target.closest('#g-clear')) {
+    const c = $('#g-clear');
+    if (!c.classList.contains('armed')) { c.classList.add('armed'); c.textContent = 'Toucher encore pour effacer'; setTimeout(() => { c.classList.remove('armed'); c.textContent = 'Effacer le réglage'; }, 4000); return; }
+    P.tune = null; TUNE = DSP.makeTuning(null); save(); c.classList.remove('armed'); c.textContent = 'Effacer le réglage'; tuneEnter();
+  }
+});
+$('#vl-list').addEventListener('click', e => { const b = e.target.closest('[data-vp]'); if (b) openPassage(Number(b.dataset.vp)); });
+$('#vp-hand').addEventListener('click', e => { const b = e.target.closest('[data-hand]'); if (!b) return; P.cfg.vhand = b.dataset.hand; save(); vStop(); $$('#vp-hand button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); vReset(); });
+$('#vp-go').addEventListener('click', () => { if (VW.run && !VW.run.done) { vStop(); vReset(); } else vStart(); });
+$('#vp-listen').addEventListener('click', () => vListen());
+$('#vp-prev').addEventListener('click', () => { if (VP > 0) openPassage(VP - 1); });
+$('#vp-next').addEventListener('click', () => { if (VD && VP < VD.passages.length - 1) openPassage(VP + 1); });
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') save();
   else if (Ear.state === 'on') { if (Ear.ctx && Ear.ctx.state !== 'running') Ear.ctx.resume().catch(() => {}); Ear.keepAwake(); }
 });
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
-if (window.__TEST__) window.__T = { Ear, DSP, get S() { return S; }, get P() { return P; }, get T() { return T; }, get N() { return N; }, show, TERMS, CURRICULUM, TERM, noteAttempt, noteAttemptTick };
+if (window.__TEST__) window.__T = { Ear, DSP, get S() { return S; }, get P() { return P; }, get T() { return T; }, get N() { return N; }, get TU() { return TU; }, get VW() { return VW; }, get VD() { return VD; }, get TUNE() { return TUNE; }, setTune(t) { P.tune = t; TUNE = DSP.makeTuning(t); }, show, openPassage, TERMS, CURRICULUM, TERM, noteAttempt, noteAttemptTick };
 show('home');
 })();
 </script>
