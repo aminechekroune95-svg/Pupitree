@@ -99,7 +99,11 @@ p { margin: 0; }
 /* Écoute */
 .ear { display: flex; align-items: center; gap: 10px; font-size: .9rem; min-height: 28px; }
 .ear .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--live); flex: none; }
-.ear .lvl { flex: 0 0 88px; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.ear .lvl { position: relative; flex: 0 0 110px; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.ear .lvl .gate { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--ink); left: 0; }
+.sens { display: flex; align-items: center; gap: 10px; font-size: .86rem; color: var(--muted); }
+.sens input { flex: 1; accent-color: var(--live); min-height: 32px; }
+.sens output { min-width: 6.5em; text-align: right; color: var(--ink); font-weight: 600; }
 .ear .lvl i { display: block; height: 100%; width: 0; background: var(--live); }
 .ear .msg { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ear.hit .dot { animation: hit .25s ease-out; }
@@ -591,7 +595,7 @@ const DSP = (() => {
 
   /* Détection des attaques : flux spectral (log, seuillé) + suivi du niveau. */
   class Onsets {
-    constructor() { this.reset(); this.sens = 1; }
+    constructor() { this.reset(); this.sens = 1; this.minDb = -120; }
     reset() { this.prev = null; this.odf = []; this.dbh = []; this.floor = -90; this.last = -1e9; this.pend = null; this.n = 0; }
     push(t, db, sp, binHz) {
       const out = [];
@@ -620,7 +624,7 @@ const DSP = (() => {
         const c = o[L - 2];
         const hist = o.slice(Math.max(0, L - 30), L - 3);
         const thr = Math.max(1.1 / this.sens, mean(hist) * 1.8 + 0.4 / this.sens);
-        const loud = db > this.floor + 8 / this.sens || (c > thr * 2.2 && db > -70);
+        const loud = (db > this.floor + 8 / this.sens || (c > thr * 2.2 && db > -70)) && db > this.minDb;
         if (c > thr && c >= o[L - 3] && c >= o[L - 1] && t - this.last > 85 && loud) {
           this.last = t - this.dt;
           out.push({ type: 'attack', t: this.last, flux: c });
@@ -2381,6 +2385,30 @@ document.addEventListener('visibilitychange', () => {
   else if (Ear.state === 'on') { if (Ear.ctx && Ear.ctx.state !== 'running') Ear.ctx.resume().catch(() => {}); Ear.keepAwake(); }
 });
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+/* ---------- Sensibilité du micro : les bruits plus faibles que le seuil sont ignorés ---------- */
+const sensHTML = '<div class="sens"><span>Sensibilité</span><input type="range" min="0" max="100" step="1" aria-label="Sensibilité du micro"><output></output></div>';
+function setupSens() {
+  $('#h-mic').insertAdjacentHTML('afterend', sensHTML + '<p class="hint">Si Pupitre réagit aux bruits de la maison (voix, pas, portes), baisse la sensibilité : le trait noir sur la jauge d’écoute monte, et tout ce qui reste en dessous est ignoré. Tes notes doivent passer au-dessus.</p>');
+  $$('.ear').forEach(el => {
+    el.querySelector('.lvl').insertAdjacentHTML('beforeend', '<b class="gate"></b>');
+    el.insertAdjacentHTML('afterend', sensHTML);
+  });
+  document.addEventListener('input', e => { if (e.target.matches('.sens input')) applySens(Number(e.target.value)); });
+  document.addEventListener('change', e => { if (e.target.matches('.sens input')) save(); });
+  applySens(P.cfg.sens == null ? 70 : P.cfg.sens);
+}
+function applySens(v) {
+  P.cfg.sens = v;
+  const gate = -78 + (100 - v) * 0.5;      // de -78 dB (tout) à -28 dB (notes fortes seulement)
+  Ear.det.sens = 0.5 + v / 140;
+  Ear.det.minDb = gate;
+  const label = v >= 85 ? 'très sensible' : v >= 60 ? 'normale' : v >= 35 ? 'réduite' : 'minimale';
+  $$('.sens input').forEach(i => { if (Number(i.value) !== v) i.value = v; });
+  $$('.sens output').forEach(o => { o.textContent = label; });
+  const w = Math.max(0, Math.min(100, (gate + 75) * 1.6));
+  $$('.ear .gate').forEach(g => { g.style.left = w + '%'; });
+}
+setupSens();
 if (window.__TEST__) window.__T = { Ear, DSP, get S() { return S; }, get P() { return P; }, get T() { return T; }, get N() { return N; }, get TU() { return TU; }, get VW() { return VW; }, get VD() { return VD; }, get TUNE() { return TUNE; }, setTune(t) { P.tune = t; TUNE = DSP.makeTuning(t); }, show, openPassage, TERMS, CURRICULUM, TERM, noteAttempt, noteAttemptTick };
 show('home');
 })();
